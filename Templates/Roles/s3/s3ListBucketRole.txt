@@ -1,4 +1,4 @@
-Make sure to enter Bucket ARN 
+Make sure to enter Bucket ARN in the yml file. 
 
 Testing it from the CLI:
  1. Assign the role to the EC2 Instance
