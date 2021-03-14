@@ -1,0 +1,8 @@
+Make sure to enter Bucket ARN 
+
+Testing it from the CLI:
+ 1. Assign the role to the EC2 Instance
+ 2. SSH into it
+ 3. run below command
+  aws s3 ls s3://bucket_name
+ 4. You should see bucket object list
