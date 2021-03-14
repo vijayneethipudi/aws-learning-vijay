@@ -1,2 +1,2 @@
-# aws-learning-vijay
-Cloudformation template to practice
+# aws-vijay
+Cloudformation templates practice
