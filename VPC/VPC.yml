@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Template
+  1 VPC
+  1 IGW
+  2 Subnets
+    1 Public Subnet
+      1 ec2 instance
+        security group
+    1 Private Subnet
+      1 ec2 instance
+        security group
+
+Parameters:
+  VpcCidrBlock:
+    Description: Vpc Cidr Block
+    Type: String
+    Default: 10.16.0.0/16
+  SubnetCidrBlock:
+    Description: Subnet Cidr Block
+    Type: CommaDelimitedList
+    Default: 10.16.16.0/24, 10.16.32.0/24
+  
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        -
+          Key: Name
+          Value: MyVPC
+
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: Name
+          Value: MyIGW
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
+
+  PBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Name
+          Value: MyPBRouteTable
+
+  PBRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - "IGWAttachment"
+    Properties:
+      RouteTableId: !Ref PBRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+  
+  RTAssociation:  
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PBSubnet
+      RouteTableId: !Ref PBRouteTable
+  
+  PBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref SubnetCidrBlock]
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - 
+          Key: Name
+          Value: Public Subnet
+
+  PRSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref SubnetCidrBlock]
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        -
+          Key: Name
+          Value: Private Subnet
+  
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+      Policies:
+        -
+          PolicyName: s3FullRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: 's3:*'
+                Resource: '*'
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - 
+          !Ref MyRole
+  
+  MyPublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0915bcb5fa77e4892
+      KeyName: SSH-using-windows
+      InstanceType: t2.micro
+      SubnetId: !Ref PBSubnet
+      SecurityGroupIds:
+        - !Ref SGSSH
+      IamInstanceProfile: !Ref MyInstanceProfile
+      Tags:
+        -
+          Key: Name
+          Value: Public Instance
+  MyPrivateInstance:
+      Type: AWS::EC2::Instance
+      Properties:
+        ImageId: ami-0915bcb5fa77e4892
+        KeyName: SSH-using-windows
+        InstanceType: t2.micro
+        SubnetId: !Ref PRSubnet
+        SecurityGroupIds:
+          - !Ref SGSSH
+        IamInstanceProfile: !Ref MyInstanceProfile
+        Tags:
+          -
+            Key: Name
+            Value: Private Instance
+  SGSSH:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: SSH Security Group
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - 
+          Key: Name
+          Value: SSH Security Group
