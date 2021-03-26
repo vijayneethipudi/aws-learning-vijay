@@ -10,6 +10,8 @@ Description: >
     1 Private Subnet
       1 ec2 instance
         security group
+    1 IAM Role
+      
 
 Parameters:
   VpcCidrBlock:
