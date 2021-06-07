@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  NAT Gateway vs S3 Gateway Endpoint
+
+Resources:
+  CustomVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CustomVPC
+      CidrBlock: 10.16.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:      
+      Tags:
+        - Key: Name
+          Value: CustomVPC-IGW
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref CustomVPC
+      InternetGatewayId: !Ref IGW
+  RTPublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CustomVPC
+      Tags:
+        - Key: Name
+          Value: CustomVPC-PublicRouteTable
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - "IGWAttachment"
+    Properties:
+      RouteTableId: !Ref RTPublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+  RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RTPublic
+      SubnetId: !Ref SNPublic
+  SNPublic:
+    Type: AWS::EC2::Subnet
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CustomVPC-PublicSubnet
+      CidrBlock: 10.16.16.0/24
+      VpcId: !Ref CustomVPC
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+  SNPrivate:
+    Type: AWS::EC2::Subnet
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CustomVPC-PrivateSubnet
+      CidrBlock: 10.16.32.0/24
+      VpcId: !Ref CustomVPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+  PublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+        - Key: Name
+          Value: PublicInstance-SNPB-CVPC
+      ImageId: 'ami-0915bcb5fa77e4892'
+      InstanceType: 't2.micro'
+      KeyName: 'SSH-using-windows'
+      IamInstanceProfile: !Ref S3InstanceProfile
+      SubnetId: !Ref SNPublic
+      SecurityGroupIds:
+        - !Ref SSHSG
+  SSHSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+        - Key: Name
+          Value: SSH-Group
+      GroupDescription: SSH into the public instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref CustomVPC
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+        - Key: Name
+          Value: PrivateInstance-SNPV-CVPC
+      ImageId: 'ami-0915bcb5fa77e4892'
+      InstanceType: 't2.micro'
+      KeyName: 'SSH-using-windows'
+      IamInstanceProfile: !Ref S3InstanceProfile
+      SubnetId: !Ref SNPrivate
+      SecurityGroupIds:
+        - !Ref SSHSG
+  S3FullAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+  S3InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref S3FullAccessRole
+      Path: /
+  RolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 's3:*'
+            Resource: '*'
+      PolicyName: S3FullAccessPolicy
+      Roles:
+        - !Ref S3FullAccessRole
