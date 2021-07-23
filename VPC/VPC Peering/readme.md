@@ -48,7 +48,8 @@ You can test it for A instance IPv4 address on B instance
   1. Navigate to VPC console and delete peering connection
   2. from command prompt enter below command
   Note: replace [stackname] with your stack name
-    `aws cloudformation delete-stack --stack-name [stackname]`
+  
+ `aws cloudformation delete-stack --stack-name [stackname]`
  
  Or you can decommission it using aws console -> CloudFormation -> click on stack -> Select stack -> Delete stack
  
