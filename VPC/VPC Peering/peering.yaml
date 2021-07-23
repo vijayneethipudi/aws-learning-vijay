@@ -1,7 +1,187 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
-  2 VPC
-  1 public subnet and 1 private subnet in each 
-  4 instances
- Resources:
-  Type
+  VPC Peering practice
+  2 VPCs
+  2 Subnets
+  2 IGW
+  2 IGW Attachments
+  2 Route tables
+  2 Security groups
+Parameters:
+  SubnetACidr:
+    Description: Subnet A Cidr Value
+    Type: String
+    Default: 10.16.10.0/24
+  SubnetBCidr:
+    Description: Subnet A Cidr Value
+    Type: String
+    Default: 10.17.10.0/24
+
+Resources:
+  VPCA:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.16.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        -
+          Key: Name
+          Value: VPCA
+  VPCB:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.17.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - 
+          Key: Name
+          Value: VPCB
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref SubnetACidr
+      VpcId: !Ref VPCA
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet A
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref SubnetBCidr
+      VpcId: !Ref VPCB
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet B
+  IGWA:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: Name
+          Value: VPCA IGW
+  IGWB:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: VPCBIGW
+  IGWAttachmentA:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPCA
+      InternetGatewayId: !Ref IGWA
+  IGWAttachmentB:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPCB
+      InternetGatewayId: !Ref IGWB
+  PublicInstanceA:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: 'ami-0dc2d3e4c0f9ebd18'
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds:
+        - !Ref SGVPCA
+      Tags:
+        -
+          Key: Name
+          Value: Public Subnet A
+  PublicInstanceB:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: 'ami-0dc2d3e4c0f9ebd18'
+      SubnetId: !Ref PublicSubnetB
+      SecurityGroupIds:
+        - !Ref SGVPCB
+      Tags:
+        -
+          Key: Name
+          Value: Public Subnet B
+  PBRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCA
+      Tags:
+        -
+          Key: Name
+          Value: PBRouteTableA
+  PBRouteA:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - "IGWAttachmentA"
+    Properties:
+      RouteTableId: !Ref PBRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGWA
+  RTAssociationA:  
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PBRouteTableA
+  PBRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCB
+      Tags:
+        -
+          Key: Name
+          Value: PBRouteTableB
+  PBRouteB:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - "IGWAttachmentB"
+    Properties:
+      RouteTableId: !Ref PBRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGWB
+  RTAssociationB:  
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PBRouteTableB
+  SGVPCA:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and Inbound from VPCB
+      VpcId: !Ref VPCA
+      SecurityGroupIngress:
+        - 
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        -
+          IpProtocol: All
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: !Ref SubnetBCidr
+      Tags:
+        - 
+          Key: Name
+          Value: VPCASecurityGroup
+  SGVPCB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and Inbound from VPCA
+      VpcId: !Ref VPCB
+      SecurityGroupIngress:
+        - 
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        -
+          IpProtocol: All
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: !Ref SubnetACidr
+      Tags:
+        - 
+          Key: Name
+          Value: VPCBSecurityGroup
