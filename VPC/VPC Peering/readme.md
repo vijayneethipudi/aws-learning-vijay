@@ -1,4 +1,4 @@
-# AWS VPC Peering practice
+# AWS VPC Peering Connection
 
 Download peering.yaml file.
 If you have aws cli setup in your local machine use below commands to create stack
