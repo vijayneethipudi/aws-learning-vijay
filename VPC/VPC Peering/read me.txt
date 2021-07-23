@@ -1,0 +1,14 @@
+Download peering.yaml file
+If you have aws cli setup in your local machine use below commands to setup stack
+commands
+  aws cloudformation validate-stack --template-body file://peering.yaml
+  aws cloudformation create-stack --stack-name stackname --template-body file://peering.yaml
+ 
+It will return a stack id in response
+You can use describe-stack-events to know what is going on, enter stackname
+  aws cloudformation describe-stack-events --stack-name stackname
+  
+ Or you could simply use AWS console to deploy the stack
+ 
+ Creating Peering connection:
+  1. Once the stack provisioned resources, navigate to VPC console
