@@ -9,17 +9,17 @@ Create security group rules
 
 SSH into the instance or you can use connect option in the EC2 console and run the following commands
  
-    `sudo su`
+   sudo su
 
-    `yum update -y`
+    yum update -y
 
-    `yum install http -y`
+    yum install http -y
 
-    `cd /var/www/html`
+    cd /var/www/html
     
-    `vi index.html`
+    vi index.html
 
-It will open a vi editor
+It will open vi editor
  
     i - insert
  
@@ -30,5 +30,6 @@ It will open a vi editor
     :q
 
 You will get back to shell
-run `ls` command, it will show you index.html > `cat index.html` will give you `Hello World`
-    `service httpd start`
+run `ls` command, it will show you index.html > `cat index.html` will give you `Hello World` and then run below command
+    
+    service httpd start
