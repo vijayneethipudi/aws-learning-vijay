@@ -33,3 +33,5 @@ You will get back to shell
 run `ls` command, it will show you index.html > `cat index.html` will give you `Hello World` and then run below command
     
     service httpd start
+
+Copy public IP address and navigate to it in browser
