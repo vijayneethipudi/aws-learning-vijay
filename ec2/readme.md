@@ -9,7 +9,7 @@ Create security group rules
 
 SSH into the instance or you can use connect option in the EC2 console and run the following commands
  
-   sudo su
+    sudo su
 
     yum update -y
 
