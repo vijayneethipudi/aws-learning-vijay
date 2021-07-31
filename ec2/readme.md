@@ -7,8 +7,7 @@ Create security group rules
  
     2. HTTP on PORT 80 for all CIDR range 0.0.0.0/0
 
-SSH into the instance or you can use connect option in the EC2 console
-run the following commands
+SSH into the instance or you can use connect option in the EC2 console and run the following commands
  
     `sudo su`
 
@@ -31,5 +30,5 @@ It will open a vi editor
     :q
 
 You will get back to shell
-run `ls` command, it will show you index.html > `cat index.html` will give you <p>Hello World</p>
+run `ls` command, it will show you index.html > `cat index.html` will give you `Hello World`
     `service httpd start`
