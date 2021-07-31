@@ -13,7 +13,7 @@ SSH into the instance or you can use connect option in the EC2 console and run t
 
     yum update -y
 
-    yum install http -y
+    yum install httpd -y
 
     cd /var/www/html
     
