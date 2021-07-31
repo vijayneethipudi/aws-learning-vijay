@@ -23,7 +23,7 @@ It will open a vi editor
  
     i - insert
  
-    type `<p>Hello World</p>`
+    type <p>Hello World</p>
 
     :w
 
